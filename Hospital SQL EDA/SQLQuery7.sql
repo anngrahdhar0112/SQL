@@ -246,4 +246,47 @@ LEFT JOIN nurse n
 ON u.AssistingNurse = n.EmployeeID;
 
 
--- 
+-- Write a SQL query to obtain the names of all the physicians performed a medical procedure but they are not ceritifed 
+-- to perform.
+SELECT phy.name
+FROM Physician phy
+WHERE employeeid IN
+	(
+		SELECT u.physician 
+		FROM undergoes u
+		LEFT JOIN Trained_In t
+		ON u.Physician = t.Physician AND u.procedures =  t.Treatment
+		WHERE treatment is NULL
+	); 
+
+
+-- Write a query in SQL to obtain the name and position of all physicians who completed a medical procedure 
+-- with certification after the date of expiration of their certificate.
+SELECT phy.name, phy.position
+FROM physician phy
+WHERE employeeid IN
+	(
+		SELECT physician
+		FROM undergoes u
+		WHERE date >
+			(
+				SELECT certificationExpires
+				FROM trained_in t
+				WHERE t.physician = u.physician 
+				AND
+				t.treatment = u.procedures 
+			)
+	);
+
+
+-- Write a query in SQL to Obtain the names of all patients whose primary care is taken by a physician who is not the 
+-- head of any department and name of that physician along with their primary care physician.
+SELECT pt.name AS 'Patient', phy.name AS "Primary care Physician"
+FROM Patient pt
+INNER JOIN physician phy
+ON pt.pcp = phy.EmployeeID
+WHERE pt.pcp NOT IN
+	(
+		SELECT head
+		FROM department
+	);
