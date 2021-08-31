@@ -290,3 +290,96 @@ WHERE pt.pcp NOT IN
 		SELECT head
 		FROM department
 	);
+
+
+-- Write a query in SQL to obtain the name of all those physicians who completed a medical procedure with certification 
+-- after the date of expiration of their certificate, their position, procedure they have done, 
+-- date of procedure, name of the patient on which the procedure had been applied and the date when the certification expired.
+SELECT phy.name AS 'Physician', phy.position AS 'Position', pr.name AS 'Procedure', u.date AS 'Date of Procedure',
+pt.name AS 'Name of the patient', t.certificationexpires AS 'Expiry Date of the certificate'
+FROM physician phy
+
+INNER JOIN undergoes u
+ON phy.EmployeeID = u.Physician
+
+INNER JOIN patient pt
+ON u.Patient = pt.SSN
+
+INNER JOIN procedures pr
+ON u.procedures = pr.code
+
+INNER JOIN Trained_In t
+ON pr.code = t.treatment
+
+WHERE u.date>t.certificationexpires
+
+
+-- Write a query in SQL to obtain the names of all the nurses who have ever been on call for room 122.
+SELECT n.name AS 'Nurse'
+FROM nurse n
+WHERE EmployeeID IN 
+	(
+		SELECT oc.nurse
+		FROM On_Call oc
+		LEFT JOIN Room r
+		ON oc.BlockCode = r.BlockCode AND
+		oc.BlockFloor = r.BlockFloor
+		WHERE r.Number = 122
+	);
+
+
+-- Write a query in SQL to Obtain the names of all patients who has been prescribed some medication 
+-- by his/her physician who has carried out primary care and the name of that physician.
+SELECT pt.name AS 'Patient', phy.name AS 'Physician'
+FROM patient pt
+
+INNER JOIN physician phy
+ON pt.pcp = phy.EmployeeID
+
+INNER JOIN Prescribes p
+ON pt.SSN = p.Patient
+
+WHERE pt.pcp = phy.employeeid AND
+	  pt.pcp = p.Physician;
+
+
+-- Write a query in SQL to obtain the names of all patients who has been undergone a procedure 
+-- costing more than $5,000 and the name of that physician who has carried out primary care.
+SELECT pt.name AS 'Patient', phy.name AS 'Physician', pr.cost AS 'Cost of the treatment'
+FROM Patient pt
+
+INNER JOIN undergoes u
+ON pt.ssn = u.Patient
+
+INNER JOIN Physician phy
+ON pt.pcp = phy.EmployeeID
+
+INNER JOIN procedures pr
+ON u.Procedures = pr.code
+
+WHERE pr.cost>5000;
+
+
+-- Write a query in SQL to Obtain the names of all patients who had at least two appointment where the nurse who prepped the 
+--appointment was a registered nurse and the physician who has carried out primary care.
+SELECT pt.name AS 'Patient', phy.name AS 'Physician', n.name AS 'Nurse'
+FROM patient pt
+
+INNER JOIN Appointment a
+ON pt.ssn = a.Patient
+
+INNER JOIN Physician phy
+ON pt.pcp = phy.EmployeeID
+
+INNER JOIN nurse n
+ON a.PrepNurse = n.EmployeeID
+
+WHERE a.patient IN
+	(
+		SELECT patient
+		FROM Appointment a
+		GROUP BY Patient
+		HAVING COUNT(*)>=2
+	)
+AND 
+n.Registered = 'true';
